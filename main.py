@@ -32,8 +32,8 @@ class Perishable:
 
 # Attacker types can attack and make others Removed
 class Attacker:
-    def attack(self):
-        pass
+    def attack(self, p_object):
+        p_object.perish()
 
 
 # Derived intermediate classes
@@ -41,7 +41,7 @@ class Attacker:
 # Active types can move around and encounter other objects
 class Active(Person):
 
-    def encounter(self):
+    def encounter(self, p_object):
         pass
 
     def move(self):
@@ -50,8 +50,7 @@ class Active(Person):
 
 # Inactive types cannot move around and remain at the same position
 class Inactive(Person):
-    def was_infected(self):
-        pass
+    was_infected = False
 
 # END derived intermediate classes
 
@@ -59,27 +58,53 @@ class Inactive(Person):
 # Active classes
 class Susceptible(Active, Perishable, Attacker):
     cooperating = False
+    bitten = False
 
-    def encounter(self):
-        pass
+    def encounter(self, p_object):
+        if type(p_object).__name__ == "Susceptible":
+            if not p_object.cooperating and not self.cooperating:
+                self.cooperate()
+                p_object.cooperate()
+        elif type(p_object).__name__ == "Infected":
+            if not self.cooperating:
+                p_object.bite(self)
+            else:
+                self.attack(p_object)
+        elif type(p_object).__name__ == "Removed":
+            if p_object.was_infected:
+                self.burn(p_object)
+                self.bury(p_object)
+            else:
+                self.bury(p_object)
+        elif type(p_object).__name__ == "Mutated":
+            p_object.attack(self)
 
     def cooperate(self):
         self.cooperating = True
 
+    def burn(self, p_object):
+        p_object.burned = True
+
+    def bury(self, p_object):
+        p_object.buried = True
+
 
 class Infected(Active, Perishable):
-    def encounter(self):
+    def encounter(self, p_object):
         pass
 
     def mutate(self):
         pass
 
-    def bite(self):
-        pass
+    def bite(self, p_object):
+        p_object.bitten = True
 
 
 class Mutated(Active, Attacker):
-    def encounter(self):
+    def encounter(self, p_object):
+        pass
+
+    def mutate(self, p_object):
         pass
 
 
@@ -132,12 +157,24 @@ def zombiola(p_total, p_initially_infected):
     print(len(removed))
     print(len(mutated))
 
-    keep_surviving = (s_count > 0)
-
-    while keep_surviving:
-
-        if s_count <= 0:
-            keep_surviving = False
+    # keep_surviving = (s_count > 0)
+    #
+    # while keep_surviving:
+    #
+    #     if s_count <= 0:
+    #         keep_surviving = False
+    #
+    #     for sus in susceptible:
+    #         pass
+    #
+    #     for inf in infected:
+    #         pass
+    #
+    #     for rem in removed:
+    #         pass
+    #
+    #     for mut in mutated:
+    #         pass
 
 
 zombiola(50, 3)
