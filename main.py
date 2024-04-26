@@ -6,18 +6,19 @@ import numpy as np
 WIDTH = 800
 HEIGHT = 1100
 
-# Colors
+# Colors for the pygame simulation
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 BLUE = (0, 0, 255)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 
-# Other constants
+# Object constants
 STARTING_HEALTH = 100
 DEFAULT_POWER = 10
 
 
+# Base classes
 class Person:
     def __init__(self, size_range=(4, 8)):
         self.x = rnd.randint(0, WIDTH)
@@ -74,6 +75,7 @@ class Active(Person):
             self.y += move_y
 
 
+# Derived classes
 class Susceptible(Active):
     def __init__(self):
         super().__init__()
@@ -97,10 +99,12 @@ class Mutated(Active):
         super().__init__()
 
 
+# Generates a number between mini and maxi, inclusively
 def flip(mini, maxi):
     return rnd.randint(mini, maxi)
 
 
+# Lists to store the variables after every run of the loop
 sus_line = []
 inf_line = []
 rem_line = []
@@ -347,14 +351,13 @@ def simulation(p_total, p_initially_infected):
     return sus_count, inf_count, rem_count, mut_count, iter_days, total
 
 
+# Make obj an instance of Infected, intended for Susceptible types
 def was_infected(obj):
     return isinstance(obj, Infected)
 
 
-def is_valid_location(p_x, p_y):
-    return 0 < p_x < WIDTH and 0 < p_y < HEIGHT
-
-
+# Make obj an instance of Removed
+# Intended for Susceptible and Infected types
 def perish(obj):
     rem = Removed()
     rem.is_carrier = was_infected(obj)
@@ -364,6 +367,7 @@ def perish(obj):
     return rem
 
 
+# Make obj an instance of Mutated, intended for Infected types
 def mutate(obj):
     mut = Mutated()
     mut.x = obj.x
@@ -372,6 +376,7 @@ def mutate(obj):
     return mut
 
 
+# Make obj an instance of Infected, intended for Susceptible types
 def bite(obj):
     inf = Infected()
     inf.x = obj.x
@@ -380,24 +385,29 @@ def bite(obj):
     return inf
 
 
+# Makes obj is_burned true
 def burn(obj):
     obj.is_burned = True
 
 
+# Makes obj is_buried true
 def bury(obj):
     obj.is_buried = True
 
 
-s, i, r, m, days, total = simulation(50, 3)
+# The output of the simulation is added to each respective variable
+s, i, r, m, days, population = simulation(50, 3)
 
+# Labels the axis' of the plot and creates the title
 plt.xlabel('Time')
 plt.ylabel('Number of individuals')
 plt.title('SIR Model Simulation')
 
-plt.plot(days, total, s, label='Susceptible', color='green')
-plt.plot(days, total, i, label='Infected', color='red')
-plt.plot(days, total, r, label='Recovered', color='black')
-plt.plot(days, total, m, label='Mutated', color='blue')
+# Plot the changes in each line list
+plt.plot(days, population, s, label='Susceptible', color='green')
+plt.plot(days, population, i, label='Infected', color='red')
+plt.plot(days, population, r, label='Recovered', color='black')
+plt.plot(days, population, m, label='Mutated', color='blue')
 plt.plot(sus_line)
 plt.plot(inf_line)
 plt.plot(rem_line)
