@@ -101,6 +101,12 @@ def flip(mini, maxi):
     return rnd.randint(mini, maxi)
 
 
+sus_line = []
+inf_line = []
+rem_line = []
+mut_line = []
+
+
 def simulation(p_total, p_initially_infected):
     result = 0
     total = p_total
@@ -113,6 +119,11 @@ def simulation(p_total, p_initially_infected):
     inf_list = []
     rem_list = []
     mut_list = []
+
+    sus_line.append(sus_count)
+    inf_line.append(inf_count)
+    rem_line.append(rem_count)
+    mut_line.append(mut_count)
 
     for sc in range(sus_count):
         sus_list.append(Susceptible())
@@ -328,9 +339,12 @@ def simulation(p_total, p_initially_infected):
         elif iter_days == 130:
             print("END OF ROUND")
             break
-
+        sus_line.append(sus_count)
+        inf_line.append(inf_count)
+        rem_line.append(rem_count)
+        mut_line.append(mut_count)
     print(sus_count, inf_count, rem_count, mut_count, iter_days)
-    return sus_list, inf_list, rem_list, mut_list, iter_days
+    return sus_count, inf_count, rem_count, mut_count, iter_days, total
 
 
 def was_infected(obj):
@@ -374,18 +388,26 @@ def bury(obj):
     obj.is_buried = True
 
 
-s, i, r, m, days = simulation(50, 3)
+s, i, r, m, days, total = simulation(50, 3)
 
 plt.xlabel('Time')
 plt.ylabel('Number of individuals')
 plt.title('SIR Model Simulation')
 
-# plt.plot(max(max(len(s), len(i)), max(len(r), len(m))), np.array(len(s)), label='Susceptible', color='green')
-# plt.plot(max(max(len(s), len(i)), max(len(r), len(m))), label='Infected', color='red')
-# plt.plot(max(max(len(s), len(i)), max(len(r), len(m))), label='Recovered', color='black')
-# plt.plot(max(max(len(s), len(i)), max(len(r), len(m))), label='Mutated', color='blue')
-plt.plot(s, i, r, m)
+plt.plot(days, total, s, label='Susceptible', color='green')
+plt.plot(days, total, i, label='Infected', color='red')
+plt.plot(days, total, r, label='Recovered', color='black')
+plt.plot(days, total, m, label='Mutated', color='blue')
+plt.plot(sus_line)
+plt.plot(inf_line)
+plt.plot(rem_line)
+plt.plot(mut_line)
 
-plt.legend()
+#
+# plt.plot(s)
+# plt.plot(i)
+# plt.plot(r)
+# plt.plot(m)
+
 plt.grid(True)
 plt.show()
