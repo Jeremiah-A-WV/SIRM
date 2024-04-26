@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import random as rnd
 import numpy as np
 
-
 # Island measurements
 WIDTH = 800
 HEIGHT = 1100
@@ -44,7 +43,7 @@ class Active(Person):
         keep_fighting = True
 
         while keep_fighting:
-            if flip(50, 75):
+            if flip(50, 75) >= 60:
                 obj.health -= self.attack_power
                 self.health -= (obj.attack_power - 10)
             else:
@@ -103,6 +102,7 @@ def flip(mini, maxi):
 
 
 def simulation(p_total, p_initially_infected):
+    result = 0
     total = p_total
     sus_count = total - p_initially_infected
     inf_count = p_initially_infected
@@ -130,30 +130,51 @@ def simulation(p_total, p_initially_infected):
 
     iter_days = 0
 
+    print(sus_count, inf_count, rem_count, mut_count, iter_days)
+
     while keep_surviving:
-        if sus_count == 0 or (sus_count + rem_count == total):
+        if sus_count == 0:
             keep_surviving = False
 
-        for sus in sus_list:
-            for inf in inf_list:
+        for sus in sus_list[:]:
+
+            for inf in inf_list[:]:
                 sus.move()
                 inf.move()
                 if sus.is_touching(inf):
                     if 55 < flip(50, 75) <= 60:
                         if sus.fight(inf):
-                            print("SUS KILLED INF")
-                            rem_list.append(perish(inf))
-                            rem_count += 1
-                            inf_list.remove(inf)
-                            inf_count -= 1
+                            result += 1
+                        else:
+                            result += 2
                     else:
-                        print("SUS BECAME INF")
+                        result += 3
+
+                    if result == 1:
+                        rem_list.append(perish(inf))
+                        rem_count += 1
+                        del inf_list[inf_list.index(inf)]
+                        inf_count -= 1
+                        print(f"SUS KILLED INF "
+                              f"S:{sus_count} I:{inf_count} R:{rem_count} M:{mut_count}")
+                    elif result == 2:
+                        rem_list.append(perish(inf))
+                        rem_count += 1
+                        del sus_list[sus_list.index(sus)]
+                        sus_count -= 1
+                        print(f"SUS WAS KILLED BY INF "
+                              f"S:{sus_count} I:{inf_count} R:{rem_count} M:{mut_count}")
+                    elif result == 3:
                         inf_list.append(bite(sus))
                         inf_count += 1
-                        sus_list.remove(sus)
+                        del sus_list[sus_list.index(sus)]
                         sus_count -= 1
+                        print(f"SUS BECAME INF "
+                              f"S:{sus_count} I:{inf_count} R:{rem_count} M:{mut_count}")
 
-            for rem in rem_list:
+                    result = 0
+
+            for rem in rem_list[:]:
                 sus.move()
                 if sus.is_touching(rem):
                     if rem.is_carrier:
@@ -164,115 +185,152 @@ def simulation(p_total, p_initially_infected):
                         print("SUS BURIED REM")
                         bury(rem)
 
-            for mut in mut_list:
+            for mut in mut_list[:]:
                 sus.move()
                 mut.move()
                 if sus.is_touching(mut):
                     if 60 < flip(50, 75) <= 65:
-                        print("MUT WAS TOO SLOW")
-                        sus.move()
+                        print(f"MUT WAS TOO SLOW "
+                              f"S:{sus_count} I:{inf_count} R:{rem_count} M:{mut_count}")
+                        result += 1
                     else:
-                        print("SUS WAS KILLED BY MUT")
+                        result += 2
+
+                    if result == 1:
+                        sus.move()
+                        result = 0
+                    elif result == 2:
                         rem_list.append(perish(sus))
                         rem_count += 1
-                        sus_list.remove(sus)
+                        del sus_list[sus_list.index(sus)]
                         sus_count -= 1
+                        print(f"SUS WAS KILLED BY MUT "
+                              f"S:{sus_count} I:{inf_count} R:{rem_count} M:{mut_count}")
+                        result = 0
 
-        for inf in inf_list:
-            for sus in sus_list:
+        for inf in inf_list[:]:
+            for sus in sus_list[:]:
                 inf.move()
                 sus.move()
                 if inf.is_touching(sus):
                     if inf.fight(sus):
-                        print("INF KILLED SUS")
+                        result += 1
+                    else:
+                        result += 2
+
+                    if result == 1:
                         rem_list.append(perish(sus))
                         rem_count += 1
-                        sus_list.remove(sus)
+                        del sus_list[sus_list.index(sus)]
                         sus_count -= 1
-                    else:
-                        print("INF WAS KILLED BY SUS")
+                        print(f"INF KILLED SUS "
+                              f"S:{sus_count} I:{inf_count} R:{rem_count} M:{mut_count}")
+                    if result == 2:
                         rem_list.append(perish(inf))
                         rem_count += 1
-                        inf_list.remove(inf)
+                        del inf_list[inf_list.index(inf)]
                         inf_count -= 1
+                        print(f"INF WAS KILLED BY SUS "
+                              f"S:{sus_count} I:{inf_count} R:{rem_count} M:{mut_count}")
+                    result = 0
 
-            for rem in rem_list:
+            for rem in rem_list[:]:
                 inf.move()
                 if inf.is_touching(rem):
                     if not rem.is_buried:
-                        print("INF ATE REM")
+                        result += 1
+
+                    if result == 1:
                         mut_list.append(mutate(inf))
                         mut_count += 1
-                        inf_list.remove(inf)
+                        del inf_list[inf_list.index(inf)]
                         inf_count -= 1
+                        print(f"INF ATE REM "
+                              f"S:{sus_count} I:{inf_count} R:{rem_count} M:{mut_count}")
 
-            for mut in mut_list:
+                    result = 0
+
+            for mut in mut_list[:]:
                 inf.move()
                 mut.move()
                 if inf.is_touching(mut):
                     if flip(50, 75) <= 55:
-                        print("MUT MUTATED INF")
+                        result += 1
+                    else:
+                        result += 2
+
+                    if result == 1:
                         mut_list.append(mutate(inf))
                         mut_count += 1
-                        inf_list.remove(inf)
+                        del inf_list[inf_list.index(inf)]
                         inf_count -= 1
-                    else:
-                        print("MUT KILLED INF")
+                        print(f"MUT MUTATED INF "
+                              f"S:{sus_count} I:{inf_count} R:{rem_count} M:{mut_count}")
+                    elif result == 2:
                         rem_list.append(perish(inf))
                         rem_count += 1
-                        inf_list.remove(inf)
+                        del inf_list[inf_list.index(inf)]
                         inf_count -= 1
+                        print(f"MUT KILLED "
+                              f"S:{sus_count} I:{inf_count} R:{rem_count} M:{mut_count}")
 
-        for mut in mut_list:
-            for sus in sus_list:
+                    result = 0
+
+        for mut in mut_list[:]:
+            for sus in sus_list[:]:
                 mut.move()
                 sus.move()
                 if mut.is_touching(sus):
-                    if flip(50, 75):
-                        print("MUT WAS TOO SLOW")
+                    if flip(50, 75) >= 55:
+                        print(f"MUT WAS TOO SLOW "
+                              f"S:{sus_count} I:{inf_count} R:{rem_count} M:{mut_count}")
                         sus.move()
                     else:
-                        print("MUT KILLED SUS")
+                        print(f"MUT KILLED SUS "
+                              f"S:{sus_count} I:{inf_count} R:{rem_count} M:{mut_count}")
                         rem_list.append(perish(sus))
                         rem_count += 1
-                        sus_list.remove(sus)
+                        del sus_list[sus_list.index(sus)]
                         sus_count -= 1
 
-            for inf in inf_list:
+            for inf in inf_list[:]:
                 mut.move()
                 inf.move()
                 if mut.is_touching(inf):
-                    if flip(50, 75):
-                        print("INF BECAME MUT")
+                    if flip(50, 75) <= 60:
+                        result += 1
+                    else:
+                        result += 2
+
+                    if result == 1:
                         mut_list.append(mutate(inf))
                         mut_count += 1
-                        inf_list.remove(inf)
+                        del inf_list[inf_list.index(inf)]
                         inf_count -= 1
-                    else:
-                        print("INF KILLED BY MUT")
+                        print(f"MUT MUTATED INF "
+                              f"S:{sus_count} I:{inf_count} R:{rem_count} M:{mut_count}")
+                    elif result == 2:
                         rem_list.append(perish(inf))
                         rem_count += 1
-                        inf_list.remove(inf)
+                        del inf_list[inf_list.index(inf)]
                         inf_count -= 1
+                        print(f"MUT KILLED INF "
+                              f"S:{sus_count} I:{inf_count} R:{rem_count} M:{mut_count}")
+
+                    result = 0
 
         iter_days += 1
 
-    return sus_count, inf_count, rem_count, mut_count, iter_days
+        if (sus_count + inf_count + rem_count + mut_count) > total:
+            raise Exception("ERROR -- TOTAL IS TOO HIGH")
+        elif (sus_count + inf_count + rem_count + mut_count) < total:
+            raise Exception("ERROR -- TOTAL IS TOO LOW")
+        elif iter_days == 130:
+            print("END OF ROUND")
+            break
 
-
-def plot_sir(susceptible, infected, removed, mutated, p_days):
-    plt.figure(figsize=(10, 6))
-    plt.plot(range(p_days), susceptible, label='Susceptible', color='green')
-    plt.plot(range(p_days), infected, label='Infected', color='red')
-    plt.plot(range(p_days), removed, label='Recovered', color='black')
-    plt.plot(range(p_days), mutated, label='Mutated', color='blue')
-
-    plt.xlabel('Time')
-    plt.ylabel('Number of individuals')
-    plt.title('SIR Model Simulation')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
+    print(sus_count, inf_count, rem_count, mut_count, iter_days)
+    return sus_list, inf_list, rem_list, mut_list, iter_days
 
 
 def was_infected(obj):
@@ -318,4 +376,16 @@ def bury(obj):
 
 s, i, r, m, days = simulation(50, 3)
 
-plot_sir(s, i, r, m, days)
+plt.xlabel('Time')
+plt.ylabel('Number of individuals')
+plt.title('SIR Model Simulation')
+
+# plt.plot(max(max(len(s), len(i)), max(len(r), len(m))), np.array(len(s)), label='Susceptible', color='green')
+# plt.plot(max(max(len(s), len(i)), max(len(r), len(m))), label='Infected', color='red')
+# plt.plot(max(max(len(s), len(i)), max(len(r), len(m))), label='Recovered', color='black')
+# plt.plot(max(max(len(s), len(i)), max(len(r), len(m))), label='Mutated', color='blue')
+plt.plot(s, i, r, m)
+
+plt.legend()
+plt.grid(True)
+plt.show()
